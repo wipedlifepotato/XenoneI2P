@@ -51,6 +51,8 @@ class TorrentWrapper():
                 except Exception as exc:
                  print("Exception:" + str(exc))
                  return False
+    def remove(self,_id):
+        self.client().remove_torrent(_id)
     pass
 	# todo, ...
 
@@ -62,6 +64,7 @@ def main():
     torrents = t.get()
     for torrent in torrents:
         print(torrent)
+    t.remove(1)
     pass
 
 if __name__ == "__main__":
