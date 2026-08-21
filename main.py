@@ -12,26 +12,24 @@ class TorrentWrapper():
         self.rpcpassword = rpcpassword
     def client(self): return transmission_rpc.Client(host=self.rpchost, port=self.rpcport, username=self.rpcuser, password=self.rpcpassword, path="/mytorrents/rpc/")
     def add(self, w: str, is_magnet: bool = False, http_proxy_port: int = 4444):
-        if is_magnet: self.client().add_torrent(w)
+        if is_magnet: 
+            raise ValueError("Magnet links not implemented in i2p for a while (check in last commits of i2pd or change")
+            self.client().add_torrent(w)
         else:
-            print("add by link")
             c = self.client()
             parsed = urlsplit(w)
             netloc = parsed.netloc
-            print("netloc: " + netloc)
             if not netloc or parsed.scheme not in ("http", "https"): raise ValueError("This is not http and not magnet") # False # better a throw maybe
-            print("netloc ok")
             if netloc.split('.')[-1] != 'i2p': raise ValueError("not i2p link") # better a throw maybe
-            print("too ok")
             try:
              print(w)
              response = requests.get(w, proxies={"http":f"http://127.0.0.1:{http_proxy_port}"}, timeout=60)
-             #response.raise_for_status()
+             response.raise_for_status()
              c.add_torrent(response.content)
-             print("add content: ")
-             print(response.content)
+             return True
             except Exception as err: 
-                print(f"err: {str(err)}")
+                print(f"err to add torrent!: {str(err)}")
+                return False
     pass
 	# todo, ...
 
@@ -39,7 +37,7 @@ class TorrentWrapper():
 def main():
     t = TorrentWrapper()
     #t.add('magnet:?xt=urn:btih:c8a431d53b00314211a78b6b8388ceb8dcbb3680&dn=Tetrazole.+Explosions+stuff.+&tr=http://tracker2.postman.i2p/announce.php', is_magnet=True)
-    t.add("http://tracker2.postman.i2p/index.php?action=Download&id=55406", is_magnet=False)
+    #t.add("http://tracker2.postman.i2p/index.php?action=Download&id=55406", is_magnet=False)
     pass
 
 if __name__ == "__main__":
