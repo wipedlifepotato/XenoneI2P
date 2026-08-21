@@ -1,4 +1,4 @@
-import requests
+import requests, re,json
 #https://transmission-rpc.readthedocs.io/en/v7.0.12/
 #https://github.com/transmission/transmission/blob/main/docs/rpc-spec.md
 #from transmission_rpc import Client
@@ -30,6 +30,27 @@ class TorrentWrapper():
             except Exception as err: 
                 print(f"err to add torrent!: {str(err)}")
                 return False
+    def get(self):
+        try:
+            c = self.client()
+            fields = ["id", "name", "status", "rateDownload", "rateUpload", "totalSize"]
+            torrents = c.get_torrents(arguments=fields)
+            return torrents
+        except Exception as err:
+            err_message = str(err)
+            match = re.search(r"\{.*\}", err_message)
+            if match:
+                raw_json_str = match.group(0)
+                fixed_json_str = raw_json_str.replace("'", '"')
+                #print(fixed_json_str)
+                try:
+                 parsed_data = json.loads(fixed_json_str)
+                 #print(parsed_data)
+                 torrents = parsed_data.get("torrents", [])
+                 return torrents
+                except Exception as exc:
+                 print("Exception:" + str(exc))
+                 return False
     pass
 	# todo, ...
 
@@ -38,6 +59,9 @@ def main():
     t = TorrentWrapper()
     #t.add('magnet:?xt=urn:btih:c8a431d53b00314211a78b6b8388ceb8dcbb3680&dn=Tetrazole.+Explosions+stuff.+&tr=http://tracker2.postman.i2p/announce.php', is_magnet=True)
     #t.add("http://tracker2.postman.i2p/index.php?action=Download&id=55406", is_magnet=False)
+    torrents = t.get()
+    for torrent in torrents:
+        print(torrent)
     pass
 
 if __name__ == "__main__":
