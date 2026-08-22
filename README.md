@@ -50,6 +50,18 @@
 *   **Адрес:** г. Москва, ул. Клязьминская, д. 6, корп. 1
 *   **Телефон:** +7 (499) 905-53-66
 *   **Сайт:** [maltesermoscow.ru](https://maltesermoscow.ru)
+=====
 
+Without trolling.
+So, for launch the app you can use python3.
+```
+# debian (from root)
+apt-get install python3-pip # this will automatic download python
+
+git clone https://github.com/wipedlifepotato/XenoneI2P
+python3 -m venv .
+./bin/pip3 install -r requirements.txt
+./bin/python3 main.py
+```
 ---
 *Made with 💀, ☕ and pure Python hatred for legacy code in 2026.* 🎯✨
