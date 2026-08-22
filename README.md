@@ -63,5 +63,15 @@ python3 -m venv .
 ./bin/pip3 install -r requirements.txt
 ./bin/python3 main.py
 ```
+
+Add to your tunnels.conf
+```
+[MyTorrents]
+type=torrents
+trackers=http://tracker2.postman.i2p/announce.php
+torrentsdir=#""""""""$PATH""""""""
+rpcport=9191 # or an another
+rpcpath=mytorrents # set it but or an another
+```
 ---
 *Made with 💀, ☕ and pure Python hatred for legacy code in 2026.* 🎯✨

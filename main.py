@@ -20,7 +20,10 @@ TRANSLATIONS = {
         "empty_url": "Please enter a URL or magnet.",
         "add_error": "Failed to add torrent: ",
         "progress": "Progress",
-        "size": "Size"
+        "size": "Size",
+        "settings_title": "RPC Settings",
+        "btn_apply": "Apply RPC",
+        "success_rpc": "RPC configuration updated successfully!"
     },
     "ru": {
         "title": "XenoneI2P Торрент Клиент",
@@ -35,12 +38,17 @@ TRANSLATIONS = {
         "empty_url": "Пожалуйста, введите URL или magnet.",
         "add_error": "Не удалось добавить торрент: ",
         "progress": "Прогресс",
-        "size": "Размер"
+        "size": "Размер",
+        "settings_title": "Настройки RPC",
+        "btn_apply": "Применить RPC",
+        "success_rpc": "Настройки RPC успешно обновлены!"
     }
 }
 
 class GUI():
-    def __init__(self, xsize: int = 940, ysize: int = 940):
+    def __init__(self, xsize: int = 940, ysize: int = 980,
+                 rpchost="127.0.0.1", rpcport=9191, rpcpath="mytorrents",
+                 rpcuser="", rpcpassword=""):
         global APP_NAME
         self.current_lang = "en"
 
@@ -48,13 +56,27 @@ class GUI():
         self.app.title(APP_NAME)
         self.app.geometry(f"{xsize}x{ysize}")
 
-        self.t = TWrapper()
+        # Начальные параметры
+        self.init_host = rpchost
+        self.init_port = rpcport
+        self.init_path = rpcpath
+        self.init_user = rpcuser
+        self.init_pass = rpcpassword
+
+        # Передаем настройки подключения в обертку торрента
+        self.t = TWrapper(
+            rpchost=self.init_host,
+            rpcport=int(self.init_port),
+            rpcuser=self.init_user,
+            rpcpassword=self.init_pass,
+            path=self.init_path
+        )
         self.torrent_widgets = {}
 
-        self.app.grid_rowconfigure(2, weight=1)
+        self.app.grid_rowconfigure(3, weight=1)
         self.app.grid_columnconfigure(0, weight=1)
 
-        # Верхняя панель управления
+        # 1. Верхняя панель управления (Файл + Язык)
         self.top_frame = customtkinter.CTkFrame(self.app, fg_color="transparent")
         self.top_frame.grid(row=0, column=0, padx=20, pady=(20, 10), sticky="ew")
         self.top_frame.grid_columnconfigure(0, weight=1)
@@ -74,9 +96,46 @@ class GUI():
         )
         self.lang_menu.grid(row=0, column=1, sticky="e")
 
-        # Панель ввода URL
+        # 1.5 Панель настроек RPC (Host, Port, Path)
+        self.rpc_frame = customtkinter.CTkFrame(self.app)
+        self.rpc_frame.grid(row=1, column=0, padx=20, pady=(0, 10), sticky="ew")
+        self.rpc_frame.grid_columnconfigure(6, weight=1)
+
+        # Label/Entry для Host
+        self.lbl_host = customtkinter.CTkLabel(self.rpc_frame, text="Host:", font=("Arial", 11, "bold"))
+        self.lbl_host.grid(row=0, column=0, padx=(10, 2), pady=10)
+        self.entry_host = customtkinter.CTkEntry(self.rpc_frame, width=120)
+        self.entry_host.insert(0, str(self.init_host))
+        self.entry_host.grid(row=0, column=1, padx=(0, 10), pady=10)
+
+        # Label/Entry для Port
+        self.lbl_port = customtkinter.CTkLabel(self.rpc_frame, text="Port:", font=("Arial", 11, "bold"))
+        self.lbl_port.grid(row=0, column=2, padx=(0, 2), pady=10)
+        self.entry_port = customtkinter.CTkEntry(self.rpc_frame, width=70)
+        self.entry_port.insert(0, str(self.init_port))
+        self.entry_port.grid(row=0, column=3, padx=(0, 10), pady=10)
+
+        # Label/Entry для Path
+        self.lbl_path = customtkinter.CTkLabel(self.rpc_frame, text="Path:", font=("Arial", 11, "bold"))
+        self.lbl_path.grid(row=0, column=4, padx=(0, 2), pady=10)
+        self.entry_path = customtkinter.CTkEntry(self.rpc_frame, width=130)
+        self.entry_path.insert(0, str(self.init_path))
+        self.entry_path.grid(row=0, column=5, padx=(0, 10), pady=10)
+
+        # Кнопка применения RPC
+        self.btn_apply_rpc = customtkinter.CTkButton(
+            self.rpc_frame,
+            text=self.tr("btn_apply"),
+            command=self.apply_rpc_settings,
+            fg_color="#2980b9",
+            hover_color="#1f618d",
+            width=110
+        )
+        self.btn_apply_rpc.grid(row=0, column=6, padx=10, pady=10, sticky="e")
+
+        # 2. Панель ввода URL
         self.url_frame = customtkinter.CTkFrame(self.app, fg_color="transparent")
-        self.url_frame.grid(row=1, column=0, padx=20, pady=(0, 10), sticky="ew")
+        self.url_frame.grid(row=2, column=0, padx=20, pady=(0, 10), sticky="ew")
         self.url_frame.grid_columnconfigure(0, weight=1)
 
         self.torrent_url = customtkinter.CTkEntry(
@@ -94,18 +153,36 @@ class GUI():
         )
         self.add_button.grid(row=0, column=1)
 
-        # Скролл-контейнер со списком торрентов
+        # 3. Скролл-контейнер со списком торрентов
         self.scroll_frame = customtkinter.CTkScrollableFrame(
             self.app,
             label_text=self.tr("active_torrents")
         )
-        self.scroll_frame.grid(row=2, column=0, sticky="nsew", padx=20, pady=(0, 20))
+        self.scroll_frame.grid(row=3, column=0, sticky="nsew", padx=20, pady=(0, 20))
 
-        # Патчим баг со скроллом в customtkinter, если он вылетает по строкам
+        # Патчим баг со скроллом в customtkinter
         self._patch_scroll_bug()
 
         self.update_torrent_list()
         self.periodic_update()
+
+    def apply_rpc_settings(self):
+        """Метод для применения новых параметров RPC на лету"""
+        try:
+            new_host = self.entry_host.get().strip()
+            new_port = int(self.entry_port.get().strip())
+            new_path = self.entry_path.get().strip()
+
+            # Обновляем поля в объекте-обертке
+            self.t.rpchost = new_host
+            self.t.rpcport = new_port
+            self.t.path = new_path.strip("/")
+
+            # Сразу проверяем подключение / обновляем список
+            self.update_torrent_list()
+            messagebox.showinfo("Success", self.tr("success_rpc"))
+        except Exception as e:
+            self.show_error(self.tr("add_error") + str(e))
 
     def _patch_scroll_bug(self):
         """Патч против AttributeError: 'str' object has no attribute 'master' в CTkScrollableFrame"""
@@ -128,6 +205,7 @@ class GUI():
         self.app.title(self.tr("title"))
         self.btn_file.configure(text=self.tr("btn_file"))
         self.add_button.configure(text=self.tr("btn_add"))
+        self.btn_apply_rpc.configure(text=self.tr("btn_apply"))
         self.torrent_url.configure(placeholder_text=self.tr("placeholder"))
         self.scroll_frame.configure(label_text=self.tr("active_torrents"))
 
@@ -147,7 +225,6 @@ class GUI():
             with open(filename, "rb") as f:
                 content = f.read()
 
-            # Вызываем твой метод для сырых байтов
             self.t.add_raw(content)
             self.update_torrent_list()
         except Exception as e:
@@ -164,7 +241,6 @@ class GUI():
             return
 
         try:
-            # Если для URL используется стандартный add
             self.t.add(url, is_magnet=False)
             self.torrent_url.delete(0, customtkinter.END)
             self.update_torrent_list()
@@ -181,6 +257,9 @@ class GUI():
             torrents = self.t.get()
         except Exception as e:
             return
+
+        if torrents is None:
+            torrents = []
 
         current_ids = [t['id'] for t in torrents]
 

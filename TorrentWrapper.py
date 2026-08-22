@@ -5,12 +5,12 @@ import requests, re,json
 from urllib.parse import urlsplit
 import transmission_rpc
 class TorrentWrapper():
-    def __init__(self, rpchost="127.0.0.1", rpcport=9191, rpcuser="", rpcpassword=""):
+    def __init__(self, rpchost="127.0.0.1", rpcport=9191, rpcuser="", rpcpassword="", path="mytorrents"):
         self.rpchost = rpchost
         self.rpcport = rpcport
         self.rpcuser = rpcuser
         self.rpcpassword = rpcpassword
-    def client(self): return transmission_rpc.Client(host=self.rpchost, port=self.rpcport, username=self.rpcuser, password=self.rpcpassword, path="/mytorrents/rpc/")
+    def client(self): return transmission_rpc.Client(host=self.rpchost, port=self.rpcport, username=self.rpcuser, password=self.rpcpassword, path=f"/{self.path}/rpc/")
     def add_raw(self, content: bytes):
         return self.client().add_torrent(content)
     def add(self, w: str, is_magnet: bool = False, http_proxy_port: int = 4444):
