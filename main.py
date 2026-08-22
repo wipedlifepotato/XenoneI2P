@@ -33,11 +33,12 @@ class TorrentWrapper():
     def get(self):
         try:
             c = self.client()
-            fields = ["id", "name", "status", "rateDownload", "rateUpload", "totalSize"]
+            fields = ["id", "name", "status", "rateDownload", "rateUpload", "totalSize", "percentDone"]
             torrents = c.get_torrents(arguments=fields)
             return torrents
         except Exception as err:
             err_message = str(err)
+            #print(f"raw: {err_message}")
             match = re.search(r"\{.*\}", err_message)
             if match:
                 raw_json_str = match.group(0)
@@ -60,11 +61,12 @@ class TorrentWrapper():
 def main():
     t = TorrentWrapper()
     #t.add('magnet:?xt=urn:btih:c8a431d53b00314211a78b6b8388ceb8dcbb3680&dn=Tetrazole.+Explosions+stuff.+&tr=http://tracker2.postman.i2p/announce.php', is_magnet=True)
-    #t.add("http://tracker2.postman.i2p/index.php?action=Download&id=55406", is_magnet=False)
+   # t.add("http://tracker2.postman.i2p/index.php?action=Download&id=55406", is_magnet=False)
+    #t.add("http://tracker2.postman.i2p/index.php?action=Download&id=102920")
     torrents = t.get()
     for torrent in torrents:
         print(torrent)
-    t.remove(1)
+    #t.remove(1)
     pass
 
 if __name__ == "__main__":
