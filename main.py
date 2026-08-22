@@ -1,72 +1,51 @@
-import requests, re,json
-#https://transmission-rpc.readthedocs.io/en/v7.0.12/
-#https://github.com/transmission/transmission/blob/main/docs/rpc-spec.md
-#from transmission_rpc import Client
-from urllib.parse import urlsplit
-import transmission_rpc
-class TorrentWrapper():
-    def __init__(self, rpchost="127.0.0.1", rpcport=9191, rpcuser="", rpcpassword=""):
-        self.rpchost = rpchost
-        self.rpcport = rpcport
-        self.rpcuser = rpcuser
-        self.rpcpassword = rpcpassword
-    def client(self): return transmission_rpc.Client(host=self.rpchost, port=self.rpcport, username=self.rpcuser, password=self.rpcpassword, path="/mytorrents/rpc/")
-    def add(self, w: str, is_magnet: bool = False, http_proxy_port: int = 4444):
-        if is_magnet: 
-            raise ValueError("Magnet links not implemented in i2p for a while (check in last commits of i2pd or change")
-            self.client().add_torrent(w)
-        else:
-            c = self.client()
-            parsed = urlsplit(w)
-            netloc = parsed.netloc
-            if not netloc or parsed.scheme not in ("http", "https"): raise ValueError("This is not http and not magnet") # False # better a throw maybe
-            if netloc.split('.')[-1] != 'i2p': raise ValueError("not i2p link") # better a throw maybe
-            try:
-             print(w)
-             response = requests.get(w, proxies={"http":f"http://127.0.0.1:{http_proxy_port}"}, timeout=60)
-             response.raise_for_status()
-             c.add_torrent(response.content)
-             return True
-            except Exception as err: 
-                print(f"err to add torrent!: {str(err)}")
-                return False
-    def get(self):
-        try:
-            c = self.client()
-            fields = ["id", "name", "status", "rateDownload", "rateUpload", "totalSize", "percentDone"]
-            torrents = c.get_torrents(arguments=fields)
-            return torrents
-        except Exception as err:
-            err_message = str(err)
-            #print(f"raw: {err_message}")
-            match = re.search(r"\{.*\}", err_message)
-            if match:
-                raw_json_str = match.group(0)
-                fixed_json_str = raw_json_str.replace("'", '"')
-                #print(fixed_json_str)
-                try:
-                 parsed_data = json.loads(fixed_json_str)
-                 #print(parsed_data)
-                 torrents = parsed_data.get("torrents", [])
-                 return torrents
-                except Exception as exc:
-                 print("Exception:" + str(exc))
-                 return False
-    def remove(self,_id):
-        self.client().remove_torrent(_id)
+from TorrentWrapper import TorrentWrapper as TWrapper
+import customtkinter
+from customtkinter import filedialog
+APP_NAME="XenoneI2P"
+
+class GUI():
+    def add_button_file(self):
+        print("Add button clicked")
+        filename = filedialog.askopenfilename()
+        print(filename)
+        if filename == ():
+            print("No file selected")
+            return False
+        if filename.split('.')[-1] != 'torrent':
+            print("This not torrent file")
+            return False
+        with open(filename, "rb") as f:
+            content = f.read()
+        pass
+    def add_button_url(self):
+        url = self.torrent_url.get("0.0", "end")
+        print(url)
+        pass
+    def __init__(self, xsize: int=940, ysize: int =940):
+        global APP_NAME
+        self.app = customtkinter.CTk()
+        self.app.title(APP_NAME)
+        self.app.geometry(f"{xsize}x{ysize}")
+        self.add_button_file = customtkinter.CTkButton(self.app, text="Add File", command=self.add_button_file)
+        self.add_button_file.grid(row=0, column=0, padx=20, pady=20)
+        self.t = TWrapper()
+
+        self.torrent_url = customtkinter.CTkTextbox(self.app)
+        self.add_button = customtkinter.CTkButton(self.app, text="Add by url", command=self.add_button_url)
+        self.add_button.grid(row=0, column=1, padx=20, pady=20)
+        self.torrent_url.grid(row=1, column=1, sticky="nsew")
     pass
-	# todo, ...
-
-
 def main():
-    t = TorrentWrapper()
+    #t = TWrapper()
     #t.add('magnet:?xt=urn:btih:c8a431d53b00314211a78b6b8388ceb8dcbb3680&dn=Tetrazole.+Explosions+stuff.+&tr=http://tracker2.postman.i2p/announce.php', is_magnet=True)
-   # t.add("http://tracker2.postman.i2p/index.php?action=Download&id=55406", is_magnet=False)
+    #t.add("http://tracker2.postman.i2p/index.php?action=Download&id=55406", is_magnet=False)
     #t.add("http://tracker2.postman.i2p/index.php?action=Download&id=102920")
-    torrents = t.get()
-    for torrent in torrents:
-        print(torrent)
+    #torrents = t.get()
+    #for torrent in torrents:
+    #    print(torrent)
     #t.remove(1)
+    g = GUI()
+    g.app.mainloop()
     pass
 
 if __name__ == "__main__":
