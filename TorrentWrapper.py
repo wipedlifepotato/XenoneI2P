@@ -10,6 +10,7 @@ class TorrentWrapper():
         self.rpcport = rpcport
         self.rpcuser = rpcuser
         self.rpcpassword = rpcpassword
+        self.path = path
     def client(self): return transmission_rpc.Client(host=self.rpchost, port=self.rpcport, username=self.rpcuser, password=self.rpcpassword, path=f"/{self.path}/rpc/")
     def add_raw(self, content: bytes):
         return self.client().add_torrent(content)
