@@ -74,4 +74,9 @@ rpcport=9191 # or an another
 rpcpath=mytorrents # set it but or an another
 ```
 ---
+You can always change it there but settings not saving for a now, because this program is more example than a real soft
+
+<img width="1900" height="70" alt="image" src="https://github.com/user-attachments/assets/99075d76-da7e-4e46-9e46-ca25d30b623e" />
+
+
 *Made with 💀, ☕ and pure Python hatred for legacy code in 2026.* 🎯✨
