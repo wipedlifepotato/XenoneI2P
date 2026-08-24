@@ -271,14 +271,14 @@ class GUI():
         for torrent in torrents:
             t_id = torrent['id']
             name = torrent.get('name', 'Unknown')
-            size_mb = torrent.get('total_size', 0) / (1024 * 1024)
-            percent = torrent.get('percent_done', 0.0)
+            size_mb = torrent.get('totalSize', 0) / (1024 * 1024)
+            percent = torrent.get('percentDone', 0.0)
             if percent > 100:
                 percent = 100.0
 
             progress_val = percent / 100.0
-            down_speed = torrent.get('rate_download', 0) / 1024
-            up_speed = torrent.get('rate_upload', 0) / 1024
+            down_speed = torrent.get('rateDownload', 0) / 1024
+            up_speed = torrent.get('rateUpload', 0) / 1024
 
             if t_id not in self.torrent_widgets:
                 row_frame = customtkinter.CTkFrame(self.scroll_frame)
